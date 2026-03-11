@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Family Vocabulary Spelling Bee</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@400;600;800&display=swap');
+        
+        body {
+            font-family: 'Lexend', sans-serif;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            min-height: 100vh;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 2px solid #bae6fd;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-bounce:active {
+            transform: scale(0.95);
+        }
+
+        .error-shake {
+            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+        }
+
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center p-4">
+
+    <div id="app" class="w-full max-w-md">
+        <!-- Main Game Container -->
+        <div id="game-screen" class="glass-card rounded-3xl p-8 text-center relative overflow-hidden">
+            <!-- Progress Header -->
+            <div class="flex justify-between items-center mb-6">
+                <span class="text-sm font-bold text-sky-600 uppercase tracking-wider" id="progress-text">Question 1/28</span>
+                <div class="flex gap-2">
+                    <span class="text-xs bg-red-100 text-red-600 px-2 py-1 rounded-full font-bold" id="mistakes-badge">Errors: 0/3</span>
+                </div>
+            </div>
+
+            <!-- Visual Icon -->
+            <div class="mb-8 flex justify-center">
+                <div class="w-24 h-24 bg-sky-100 rounded-full flex items-center justify-center text-sky-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5c0-1.1.9-2 2-2h2"/><path d="M17 3h2c1.1 0 2 .9 2 2v2"/><path d="M21 17v2c0 1.1-.9 2-2 2h-2"/><path d="M7 21H5c-1.1 0-2-.9-2-2v-2"/><circle cx="12" cy="12" r="3"/><path d="M16 8V5c0-1.1-.9-2-2-2h-4c-1.1 0-2 .9-2 2v3"/><path d="M8 8v11c0 1.1.9 2 2 2h4c1.1 0 2-.9 2-2V8"/></svg>
+                </div>
+            </div>
+
+            <h1 class="text-2xl font-extrabold text-slate-800 mb-2">Listen and Type</h1>
+            <p class="text-slate-500 mb-8">Type the family member you hear.</p>
+
+            <!-- Audio Control -->
+            <button id="btn-listen" class="btn-bounce w-full py-4 bg-sky-500 hover:bg-sky-600 text-white rounded-2xl font-bold flex items-center justify-center gap-3 shadow-lg shadow-sky-200 transition-all mb-6">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                RE-PLAY SOUND
+            </button>
+
+            <!-- Input Area -->
+            <div class="space-y-4">
+                <input type="text" id="answer-input" placeholder="Type here..." autocomplete="off" class="w-full p-4 rounded-xl border-2 border-slate-200 focus:border-sky-500 focus:ring-0 text-center text-xl font-bold outline-none transition-all">
+                
+                <div id="feedback-area" class="h-8 flex items-center justify-center">
+                    <p id="feedback-text" class="text-sm font-medium"></p>
+                </div>
+
+                <div id="answer-hint" class="hidden py-2 px-4 bg-amber-50 text-amber-700 rounded-lg text-sm font-bold animate-bounce">
+                    Correct answer: <span id="hint-text"></span>
+                </div>
+
+                <button id="btn-check" class="btn-bounce w-full py-4 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-bold shadow-lg shadow-emerald-100 transition-all">
+                    CHECK ANSWER
+                </button>
+
+                <button id="btn-next" class="hidden btn-bounce w-full py-4 bg-indigo-500 hover:bg-indigo-600 text-white rounded-2xl font-bold shadow-lg shadow-indigo-100 transition-all">
+                    NEXT QUESTION
+                </button>
+            </div>
+        </div>
+
+        <!-- Result Screen -->
+        <div id="result-screen" class="hidden glass-card rounded-3xl p-8 text-center">
+            <h2 class="text-3xl font-extrabold text-slate-800 mb-2">Well Done! 🎉</h2>
+            <p class="text-slate-500 mb-8">You have completed the family vocabulary set.</p>
+            
+            <div class="grid grid-cols-2 gap-4 mb-8">
+                <div class="p-4 bg-sky-50 rounded-2xl">
+                    <p class="text-xs text-sky-600 uppercase font-bold mb-1">Total Questions</p>
+                    <p class="text-2xl font-black text-sky-800" id="stat-total">0</p>
+                </div>
+                <div class="p-4 bg-emerald-50 rounded-2xl">
+                    <p class="text-xs text-emerald-600 uppercase font-bold mb-1">Correct First Try</p>
+                    <p class="text-2xl font-black text-emerald-800" id="stat-correct">0</p>
+                </div>
+            </div>
+
+            <button onclick="location.reload()" class="btn-bounce w-full py-4 bg-slate-800 hover:bg-slate-900 text-white rounded-2xl font-bold transition-all">
+                PLAY AGAIN
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const vocabulary = [
+            "father", "mother", "parents", "dad", "daddy", "mom", "mommy", 
+            "son", "daughter", "child", "children", "brother", "sister", 
+            "sibling", "husband", "wife", "grandfather", "grandmother", 
+            "grandparents", "grandpa", "grandma", "grandson", "granddaughter", 
+            "grandchildren", "uncle", "aunt", "auntie", "cousin"
+        ];
+
+        const compliments = ["Well done!", "Good job!", "Excellent!", "Very good!"];
+        
+        let currentIndex = 0;
+        let mistakes = 0;
+        let correctCount = 0;
+        let playlist = [];
+        let isProcessing = false;
+
+        // Shuffle function
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // Web Speech API - Normal Voice
+        function speak(text) {
+            // Cancel any current speech
+            window.speechSynthesis.cancel();
+
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'en-US';
+            utterance.rate = 0.8; // Slightly slower for clarity
+            utterance.pitch = 1.0; // Normal pitch
+            
+            // Optional: find a better voice if available
+            const voices = window.speechSynthesis.getVoices();
+            const femaleVoice = voices.find(v => v.lang.startsWith('en') && v.name.toLowerCase().includes('female')) 
+                             || voices.find(v => v.lang.startsWith('en'));
+            
+            if (femaleVoice) {
+                utterance.voice = femaleVoice;
+            }
+
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function initGame() {
+            playlist = shuffle([...vocabulary]);
+            currentIndex = 0;
+            correctCount = 0;
+            
+            // Some browsers require a user interaction before speech works
+            // The first load will play as soon as the user interacts or it's allowed
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            mistakes = 0;
+            isProcessing = false;
+            const currentWord = playlist[currentIndex];
+            
+            document.getElementById('progress-text').innerText = `Question ${currentIndex + 1}/${playlist.length}`;
+            document.getElementById('mistakes-badge').innerText = `Errors: 0/3`;
+            document.getElementById('answer-input').value = "";
+            document.getElementById('answer-input').disabled = false;
+            document.getElementById('answer-input').classList.remove('error-shake');
+            document.getElementById('feedback-text').innerText = "";
+            document.getElementById('answer-hint').classList.add('hidden');
+            document.getElementById('btn-check').classList.remove('hidden');
+            document.getElementById('btn-next').classList.add('hidden');
+            
+            setTimeout(() => {
+                const input = document.getElementById('answer-input');
+                input.focus();
+                speak(currentWord);
+            }, 300);
+        }
+
+        function checkAnswer() {
+            if (isProcessing) return;
+            
+            const inputEl = document.getElementById('answer-input');
+            const userInput = inputEl.value.trim().toLowerCase();
+            const correctWord = playlist[currentIndex].toLowerCase();
+            const feedbackText = document.getElementById('feedback-text');
+
+            if (userInput === "") return;
+
+            if (userInput === correctWord) {
+                isProcessing = true;
+                if (mistakes === 0) correctCount++;
+                
+                const compliment = compliments[Math.floor(Math.random() * compliments.length)];
+                feedbackText.innerText = compliment;
+                feedbackText.className = "text-emerald-600 font-bold";
+                
+                inputEl.disabled = true;
+                document.getElementById('btn-check').classList.add('hidden');
+                document.getElementById('btn-next').classList.remove('hidden');
+                
+                speak(compliment);
+            } else {
+                mistakes++;
+                inputEl.classList.add('error-shake');
+                setTimeout(() => inputEl.classList.remove('error-shake'), 500);
+                
+                feedbackText.innerText = "Try again!";
+                feedbackText.className = "text-red-500 font-bold";
+                document.getElementById('mistakes-badge').innerText = `Errors: ${mistakes}/3`;
+                
+                speak("Incorrect. Try again.");
+                inputEl.value = "";
+                inputEl.focus();
+
+                if (mistakes >= 3) {
+                    document.getElementById('hint-text').innerText = playlist[currentIndex];
+                    document.getElementById('answer-hint').classList.remove('hidden');
+                }
+            }
+        }
+
+        function nextQuestion() {
+            currentIndex++;
+            if (currentIndex < playlist.length) {
+                loadQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        function showResults() {
+            document.getElementById('game-screen').classList.add('hidden');
+            document.getElementById('result-screen').classList.remove('hidden');
+            document.getElementById('stat-total').innerText = playlist.length;
+            document.getElementById('stat-correct').innerText = correctCount;
+        }
+
+        document.getElementById('btn-listen').addEventListener('click', () => {
+            speak(playlist[currentIndex]);
+        });
+
+        document.getElementById('btn-check').addEventListener('click', checkAnswer);
+        document.getElementById('btn-next').addEventListener('click', nextQuestion);
+
+        document.getElementById('answer-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                if (!document.getElementById('btn-next').classList.contains('hidden')) {
+                    nextQuestion();
+                } else {
+                    checkAnswer();
+                }
+            }
+        });
+
+        // Ensure voices are loaded for Chrome
+        if (window.speechSynthesis.onvoiceschanged !== undefined) {
+            window.speechSynthesis.onvoiceschanged = () => {}; 
+        }
+
+        window.onload = initGame;
+    </script>
+</body>
+</html>
